@@ -9,6 +9,8 @@ except that since we working with AI and Computer Vision technologies our Hello 
 each of the most common Computer Vision uses: classification, detection and segmentation.
 
 ## Hello Classification
+[OpenVINO](openvino/openvino-classifying-images.md)
+
 This builds an image classifier using Python and can be run using any of the popular pre-trained classification
 models. The example,
 * loads an image specified as a command line argument,
