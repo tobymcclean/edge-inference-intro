@@ -26,8 +26,6 @@ parser.add_argument('-o', '--ofile', type=str, required=False,
                     help='Optional. Filename to write the annotated image to', default=None)
 parser.add_argument('-l', '--labels', type=str, required=False,
                     help='Optional. Filename of the class id to label mappings', default=None)
-parser.add_argument('-nt', '--top_n', type=int, required=False, help='Optional. The number of classes to print out.',
-                    default=10)
 parser.add_argument('-d', '--device', type=str, required=False,
                     help='Optional. Specify the target device to infer on: CPU, GPU, MYRIAD or HETERO.', default='CPU')
 parser.add_argument('-x', '--extension', type=str, required=False,
@@ -153,7 +151,8 @@ res = res[out_blob]
 # ----------------- Process results  ------------------------------------------
 # -----------------------------------------------------------------------------
 log.info('Processing detected objects')
-boxes, classes = {}, {}
+boxes = {}
+classes = {}
 data = res[0][0]
 
 for number, proposal in enumerate(data):
@@ -163,11 +162,11 @@ for number, proposal in enumerate(data):
         label = np.int(proposal[1])
         confidence = proposal[2]
         xmin = np.int(iw * proposal[3])
-        ymin = np.int(iw * proposal[4])
+        ymin = np.int(ih * proposal[4])
         xmax = np.int(iw * proposal[5])
-        ymax = np.int(iw * proposal[6])
-        print(f'[{number}, {label}] element, prob = {confidence:.6}     ({xmin}, {ymin})-({xmax}, {ymax}) batch id : {imid}', end="")
-        if proposal[2] > 0.5:
+        ymax = np.int(ih * proposal[6])
+        print(f'[{number}, {label}] element, prob = {confidence:.6}     ({xmin}, {ymin})-({xmax}, {ymax}) batch id : {imid}', end="\n")
+        if confidence > 0.5:
             if not imid in boxes.keys():
                 boxes[imid] = []
             boxes[imid].append([xmin, ymin, xmax, ymax])
@@ -175,13 +174,24 @@ for number, proposal in enumerate(data):
                 classes[imid] = []
             classes[imid].append(label)
 
-for imid in classes:
-    tmp_image = cv2.imread(ifile)
-    for box in boxes[imid]:
-        cv2.rectangle(tmp_image, (box[0], box[1]), (box[2], box[3]), (232, 35, 244), 2)
-    cv2.imshow('OV Detection', tmp_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+if args['labels']:
+    with open(args['labels'], 'r') as f:
+        labels_map = [x.split(sep=' ', maxsplit=1)[-1].strip() for x in f]
+else:
+    labels_map = None
+
+image = cv2.imread(ifile)
+for imid in classes.keys():
+    for idx, box in enumerate(boxes[imid]):
+        class_id = classes[imid][idx] - 1
+        label = labels_map[class_id] if labels_map else class_id
+        image = cv2.putText(image, f'{label}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+        image = cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), (232, 35, 244), 2)
+        cv2.imwrite('out.jpeg', image)
+
+cv2.imshow('OV Detection', image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 # -----------------------------------------------------------------------------
 # ----------------- All done --------------------------------------------------

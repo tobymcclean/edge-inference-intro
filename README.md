@@ -19,8 +19,11 @@ models. The example,
 * produces a list of classes and their confidence.
 
 ## Hello Detection
+[OpenVINO](openvino/openvino-hello-detection.md)
+
 This builds an object detector using Python and can be run using any of the popular pre-trained object detection
 models. The example,
+
 * loads an image specified as a command line argument,
 * loads a pre-trained object detection model,
 * executes the model, and

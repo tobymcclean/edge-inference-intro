@@ -1,47 +1,42 @@
-# Hello Classification with OpenVINO^TM^
+# Hello Object Detection with OpenVINO^TM^
 
-Based on https://github.com/dusty-nv/jetson-inference/blob/master/docs/imagenet-console-2.md
+
 
 ------
 
-The first computer vision capability we're highlighting in this tutorial is image recognition, using classification networks that have been trained on large datasets to identiy scenes and objects.
+The computer vision capability we're highlighting in this tutorial is object detection, using networks that have been trained on large datasets to detect and classify objects.
 
-The application accepts an input image and outputs the probability for each class. Having been trained on the ImageNet ILSVRC dataset of [1000 objects](https://github.com/dusty-nv/jetson-inference/blob/master/data/networks/ilsvrc12_synset_words.txt), the GoogleNet and RestNet-18 models were automatically downloaed during the build step.
+The application accepts an input image and outputs an image with bounding boxes around the detected objects. 
 
 As examples we provide a Python version of the application.
 
 ## Code Explained
 
-Now, we are going to walk through creating a new application from scratch in Python for image classification called `ov-classification.py`. The application will load an abritary image from disk and classify it using a classification network such as `AlexNet`
+Now, we are going to walk through creating a new application from scratch in Python for object detection called `ov-detection.py`. The application will load an abritary image from disk and classify it using a detection network such as `SSD with MobileNet V2`
 
 ### Setting up the Project
 
-You can store the `ov-classification.py` file that we will be creating wherever you want on your device. For simplicity, this guide will create it along with some test images inside a directory under the user's home directory; `~/edge-inference-intro`.
+You can store the `ov-detection.py` file that we will be creating wherever you want on your device. For simplicity, this guide will create it along with some test images inside a directory under the user's home directory; `~/edge-inference-intro`.
 
 Run the following commands from a terminal to create the directory and files.
 
-```
+```bash
 $ cd ~/
 $ mkdir edge-inference-intro
 $ cd edge-inference-intro
-$ touch ov-classification.py
-$ wget https://images.pexels.com/photos/241316/pexels-photo-241316.jpeg
-$ wget https://images.pexels.com/photos/39855/lamborghini-brno-racing-car-automobiles-39855.jpeg?cs=srgb&dl=yellow-sports-car-during-day-time-39855.jpg&fm=jpg
-$ wget https://images.pexels.com/photos/164654/pexels-photo-164654.jpeg?cs=srgb&dl=orange-mercedes-benz-g63-164654.jpg&fm=jpg
-$ wget https://images.pexels.com/photos/220938/pexels-photo-220938.jpeg?cs=srgb&dl=adorable-animal-canine-cute-220938.jpg&fm=jpg
-$ wget https://images.pexels.com/photos/46505/swiss-shepherd-dog-dog-pet-portrait-46505.jpeg?cs=srgb&dl=white-long-coated-medium-size-dog-sticking-tongue-out-during-46505.jpg&fm=jpg
-
+$ touch ov-detection.py
 ```
 
 Some test images are downloaded to the folder with the `wget` commands above.
 
 ### Download Pretrained Model
 
-```
-cd ~/edge-inference-intro
-/opt/intel/openvino/deployment_tools/tools/model_downloader/downloader.py --name alexnet
+```bash
+$ cd ~/edge-inference-intro
 
-/opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model ./public/alexnet/alexnet.caffemodel
+$/opt/intel/openvino/deployment_tools/tools/model_downloader/downloader.py --name ssd_mobilenet_v2_coco
+
+$/opt/intel/openvino/deployment_tools/tools/model_downloader/converter.py --name ssd_mobilenet_v2_coco
 ```
 
 
@@ -80,8 +75,6 @@ from openvino.inference_engine import IENetwork, IECore
 
 Next, add some code to parse the command line arguments supported by the application.  There are two mandatory arguments: the image to be classified (```-i``` or ```--ifile```) and the model to use for classification (```-m``` or ```--model```.)
 
-
-
 ```python
 parser = argparse.ArgumentParser(add_help=True)
 parser.add_argument('-i', '--ifile', type=str, required=True,
@@ -92,10 +85,10 @@ parser.add_argument('-o', '--ofile', type=str, required=False,
                     help='Optional. Filename to write the annotated image to', default=None)
 parser.add_argument('-l', '--labels', type=str, required=False,
                     help='Optional. Filename of the class id to label mappings', default=None)
-parser.add_argument('-nt', '--top_n', type=int, required=False, help='Optional. The number of classes to print out.',
-                    default=10)
 parser.add_argument('-d', '--device', type=str, required=False,
                     help='Optional. Specify the target device to infer on: CPU, GPU, MYRIAD or HETERO.', default='CPU')
+parser.add_argument('-x', '--extension', type=str, required=False,
+                    help='Optional. Extension for custom layers.', default=None)
 
 args = parser.parse_args()
 args = vars(args)
@@ -105,25 +98,25 @@ The application also accepts the following optional arguments:
 
 * A filename to write an image with the top classification and confidence level (```-o``` or ```--ofile```)
 * A filename for a file that maps the class id to a human readable label (```-l``` or ```--labels```)
-* The number of classes to output. It will first sort the classes based on confidence level (```-nt``` or ```-top_n```). The default is ```10```.
 * The device to use to run the model (```-d``` or ```--device```). The value must be one of ```CPU```, ```GPU```, ```MYRIAD``` or ```HETERO```. The default is ```CPU```.
+* A library of extensions (```-x``` or ```--device```) for the engine to use with custome layers. The default is None.
 
 For example, to run the application
 
 ```
-python openvino/ov-classification.py -m alexnet.xml -i car1.jpeg
+python ov-detection.py -m public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.xml -x /opt/intel/openvino/inference_engine/lib/intel64/libcpu_extension.dylib -i car1.jpeg
 ```
 
 ### Create the OpenVINO^TM^ Inference Engine
 
 The following code will load the provided classification model with OpenVINO^TM^. The [OpenVINO^TM^ documentation](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models) provides a list of pre-trained models for performing classifications. 
 
-In this article we will continue to use AlexNet which can classify the 1000 different classes from the [ImageNet dataset](http://image-net.org/). The classes include:
+In this article we will continue to use SSD with MobileNet V2 which can classify the 80 different categories; see [coco_classes.txt](coco_classes.txt) for the list of categories. The classes include:
 
-* different kinds of fruits and vegetables,
-* different species of animals,
 * different kinds of vehicles,
-* different pieces of furniture,
+* different species of animals,
+* different kinds of sports equipment,
+* different kinds of everyday objects,
 * etc.
 
 ```python
@@ -170,15 +163,41 @@ To dynamically resize the input image into the size required by the model we com
 input_blob = next(iter(net.inputs))
 out_blob = next(iter(net.outputs))
 net.batch_size = 1
+input_name = ''
+input_info_name = ''
+```
 
+Set the precision of the input layer and verify that the network is one that we can handle in our application
+
+```python
+for input_key in net.inputs:
+    if len(net.inputs[input_key].layout) == 4:
+        input_name = input_key
+        net.inputs[input_key].precision = 'U8'
+    elif len(net.inputs[input_key].layout) == 2:
+        input_info_name = input_key
+        net.inputs[input_key].precision = 'FP32'
+        if net.inputs[input_key].shape[1] != 3 and net.inputs[input_key].shape[1] != 6 or net.inputs[input_key].shape[
+            0] != 1:
+            log.error('Invalid input info. Should be 3 or 6 values length.')
+```
+
+Store the shape of the model input layer.
+
+```python
 n, c, h, w = net.inputs[input_blob].shape
 ```
 
-Now we can use OpenCV to load the image
+Now we can use OpenCV to load the image and record the original image height and width.
 
 ```python
 ifile = args['ifile']
+images = np.ndarray(shape=(n, c, h, w))
+images_hw = []
+
 image = cv2.imread(ifile)
+ih, iw = image.shape[:-1]
+images_hw.append((ih, iw))
 ```
 
 Resize the image if necessary.
@@ -193,75 +212,88 @@ Change the data layout of the loaded image
 
 ```python
 image = image.transpose((2, 0, 1))
+images[0] = image
 ```
 
-### Classify the Image
+### Detect Objects in the Image
 
-We are ready for the most important part classifying the image. The inference engine expects the image to be included in a 4-dimensional array. The reason for this is sometimes models can process image in batches greater than one.
+We are ready for the most important part of detecting objects in the image. The inference engine expects the image to be included in a 4-dimensional array. The reason for this is sometimes models can process image in batches greater than one.
 
 ```python
-images = np.ndarray(shape=(n, c, h, w))
-images[0] = image
 res = exec_net.infer(inputs={input_blob: images})
 ```
 
 ### Process the Results
 
-After the inference engine is executed with the input image a result is produced. The result contains a list of classes and a confidence level for the class. The confidence level is an indicator of how certain the model is the input image is that class. The class of an image is often the class with the highest confidence level.
+After the inference engine is executed with the input image a result is produced. The result contains a list of bounding boxes with a classe and a confidence level. The confidence level is an indicator of how certain the model is the contents of the box are of the specified class.
 
 ```python
 res = res[out_blob]
 ```
 
-For this application the classes are sorted highest to lowest based on confidence level. Then the specified (```-nt``` or ```--top_n```) number of classes is output.
-
-Print the result
+For each bounding box we collect the top-left corner and the bottom-right corner of the box. At the same time we need to calculate the position in the original image.
 
 ```python
-number_top = args['top_n']
+for number, proposal in enumerate(data):
+    if proposal[2] > 0:
+        imid = np.int(proposal[0])
+        ih, iw = images_hw[imid]
+        label = np.int(proposal[1])
+        confidence = proposal[2]
+        xmin = np.int(iw * proposal[3])
+        ymin = np.int(ih * proposal[4])
+        xmax = np.int(iw * proposal[5])
+        ymax = np.int(ih * proposal[6])
+        print(f'[{number}, {label}] element, prob = {confidence:.6}     ({xmin}, {ymin})-({xmax}, {ymax}) batch id : {imid}', end="")
+        if proposal[2] > 0.5:
+            if not imid in boxes.keys():
+                boxes[imid] = []
+            boxes[imid].append([xmin, ymin, xmax, ymax])
+            if not imid in classes.keys():
+                classes[imid] = []
+            classes[imid].append(label)
+```
+
+Load the labels into a map so that we can lookup a human-friendly label given the category id in the result.
+
+```python
 if args['labels']:
     with open(args['labels'], 'r') as f:
         labels_map = [x.split(sep=' ', maxsplit=1)[-1].strip() for x in f]
 else:
     labels_map = None
-
-classid_str = 'class'
-classid_str = classid_str + ' ' * (25-len(classid_str))
-probability_str = 'confidence'
-probability_str = probability_str + ' ' * (15-len(probability_str))
-
-for i, probs in enumerate(res):
-    probs = np.squeeze(probs)
-    top_ind = np.argsort(probs)[-number_top:][::-1]
-    log.info(f'{classid_str}  {probability_str}')
-    log.info('{}  {}'.format(
-        '-' * len(classid_str),
-        '-' * len(probability_str)))
-
-    top_class = labels_map[top_ind[0]] if labels_map else f'{top_ind[0]}'
-    top_accuracy = probs[top_ind[0]] * 100
-
-    for id in top_ind:
-        det_label = labels_map[id] if labels_map else f'{id}'
-        det_label = det_label[0:len(classid_str) - 1]
-        label_length = len(det_label)
-        space_num_before = 0 #(len(classid_str) - label_length) // 2
-        space_num_after = len(classid_str) - (space_num_before + label_length) + 2
-        space_num_before_prob = 0 #(len(probability_str) - len(str(probs[id]))) // 2
-        log.info('{}{}{}{}{:.7f}'.format(
-            ' ' * space_num_before,
-            det_label,
-            ' ' * space_num_after,
-            ' ' * space_num_before_prob,
-            probs[id]))
 ```
+
+Now for each of the bounding boxes draw it on the original image using the ```rectangle``` function from OpenCV.
+
+```python
+image = cv2.imread(ifile)
+for imid in classes:
+    for idx, box in enumerate(boxes[imid]):
+        class_id = classes[imid][idx] - 1
+        label = labels_map[class_id] if labels_map else class_id
+        image = cv2.putText(image, f'{label}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
+        image = cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), (232, 35, 244), 2)
+```
+
+### Display the Image
+
+We can now use OpenCV to display the original image with the bounding boxes.
+
+```python
+cv2.imshow('OV Detection', tmp_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+```
+
+
 
 ## Running the Application
 
 To run the application on an image ```car1.jpeg``` using the AlexNet (```alexnet.xml```) model:
 
 ```bash
-$  python openvino/ov-classification.py -m alexnet.xml -l imagenet_classes.txt -i car1.jpeg
+$  python openvino/ov-detection.py -m public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.xml -l coco_classes.txt -x /opt/intel/openvino/inference_engine/lib/intel64/libcpu_extension.dylib -i cars_parked2.jpeg
 ```
 
 Which outputs
@@ -269,34 +301,28 @@ Which outputs
 ```
 [ INFO ] Creating the argument parser...
 [ INFO ] Loading model
-[ INFO ] ... model file alexnet.xml
-[ INFO ] ... weights file alexnet.bin
+[ INFO ] ... model file public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.xml
+[ INFO ] ... weights file public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.bin
 [ INFO ] Creating inference engine
 [ INFO ] ...Checking that the network can be run on the selected device
 [ INFO ] ...Checking that the network has a single input and output
 [ INFO ] ...Loading the model
 [ INFO ] Getting input information
 [ INFO ] Loading image
-[ INFO ] Image car1.jpeg has been resized from (2624, 3936) to (227, 227)
+[ INFO ] Image openvino/cars_parked2.jpg has been resized from (417, 626) to (300, 300)
 [ INFO ] Starting inference in synchronous mode
 [ INFO ] Processing the output blob
-[ INFO ] Outputting the top n classes
-[ INFO ] Top 10 results:
-[ INFO ] class                      confidence     
-[ INFO ] -------------------------  ---------------
-[ INFO ] convertible                0.3641867
-[ INFO ] car, sport car             0.2427166
-[ INFO ] race car, racing car       0.1876955
-[ INFO ] radiator grille            0.1207114
-[ INFO ] wheel                      0.0233053
-[ INFO ] wagon, station wagon, wa   0.0197702
-[ INFO ] hack, taxi, taxicab        0.0113124
-[ INFO ] pickup truck               0.0073175
-[ INFO ] minivan                    0.0062480
-[ INFO ] landrover                  0.0054482
+[ INFO ] Processing detected objects
+[0, 3] element, prob = 0.952076     (97, 125)-(313, 233) batch id : 0
+[1, 3] element, prob = 0.803333     (230, 99)-(622, 417) batch id : 0
+[2, 3] element, prob = 0.641314     (46, 141)-(60, 156) batch id : 0
+[3, 3] element, prob = 0.615026     (153, 119)-(395, 258) batch id : 0
+[4, 3] element, prob = 0.587512     (4, 140)-(23, 156) batch id : 0
+[5, 3] element, prob = 0.554931     (84, 136)-(141, 160) batch id : 0
+[6, 3] element, prob = 0.54568     (66, 138)-(96, 160) batch id : 0
 ```
 
-
+![detection_example](./resources/detection_example.jpeg)
 
 ## Summary
 
