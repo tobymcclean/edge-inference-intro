@@ -1,18 +1,23 @@
-# Hello Classification with OpenVINO^TM^
+# How to run the Hello Classification with OpenVINO<sup>TM</sup> using Python
 
-Based on https://github.com/dusty-nv/jetson-inference/blob/master/docs/imagenet-console-2.md
+Toby McClean 
+
+[✉️ toby.mcclean@adlinktech.com](mailto:toby.mcclean@adlinktech.com)
+[🔗 https://www.linkedin.com/in/tobymcclean/](https://www.linkedin.com/in/tobymcclean/)
+
+Based on: [https://github.com/dusty-nv/jetson-inference/blob/master/docs/imagenet-console-2.md] (https://github.com/dusty-nv/jetson-inference/blob/master/docs/imagenet-console-2.md)
 
 ------
 
-The first computer vision capability we're highlighting in this tutorial is image recognition, using classification networks that have been trained on large datasets to identiy scenes and objects.
+The first computer vision capability we're highlighting in this tutorial is image recognition, using classification networks that have been trained on large datasets to identify scenes and objects.
 
-The application accepts an input image and outputs the probability for each class. Having been trained on the ImageNet ILSVRC dataset of [1000 objects](https://github.com/dusty-nv/jetson-inference/blob/master/data/networks/ilsvrc12_synset_words.txt), the GoogleNet and RestNet-18 models were automatically downloaed during the build step.
+The application accepts an input image and outputs the probability for each class. Having been trained on the ImageNet ILSVRC dataset of [1000 objects](https://github.com/dusty-nv/jetson-inference/blob/master/data/networks/ilsvrc12_synset_words.txt), the GoogleNet and RestNet-18 models were automatically downloaded during the build step.
 
-As examples we provide a Python version of the application.
+As an example, we provide a Python version of the application.
 
 ## Code Explained
 
-Now, we are going to walk through creating a new application from scratch in Python for image classification called `ov-classification.py`. The application will load an abritary image from disk and classify it using a classification network such as `AlexNet`
+Now, we are going to walk through creating a new application from scratch in Python for image classification called `ov-classification.py`. The application will load an abitrary image from disk and classify it using a classification network such as `AlexNet`
 
 ### Setting up the Project
 
@@ -114,9 +119,9 @@ For example, to run the application
 python openvino/ov-classification.py -m alexnet.xml -i car1.jpeg
 ```
 
-### Create the OpenVINO^TM^ Inference Engine
+### Create the OpenVINO<sup>TM</sup> Inference Engine
 
-The following code will load the provided classification model with OpenVINO^TM^. The [OpenVINO^TM^ documentation](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models) provides a list of pre-trained models for performing classifications. 
+The following code will load the provided classification model with OpenVINO<sup>TM</sup>. The [OpenVINO<sup>TM</sup> documentation](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models) provides a list of pre-trained models for performing classifications. 
 
 In this article we will continue to use AlexNet which can classify the 1000 different classes from the [ImageNet dataset](http://image-net.org/). The classes include:
 
@@ -162,9 +167,9 @@ exec_net = ie.load_network(network=net, device_name=args['device'])
 
 ### Load an image into memory
 
-We now need to load the image that will be classified and ensure that it is the right size and in the right format. Format example, OpenVINO models expect the data layout for an image to be channel, height, and width but images are loaded with a height, width, and channel data layout.
+We now need to load the image that will be classified and ensure that it is the right size and in the right format. For example, OpenVINO models expect the data layout for an image to be channel, height, and width but images are loaded with a height, width, and channel data layout.
 
-To dynamically resize the input image into the size required by the model we compute the dimensions of the models input layer.
+To dynamically resize the input image into the size required by the model we compute the dimensions of the model's input layer.
 
 ```python
 input_blob = next(iter(net.inputs))
@@ -207,7 +212,7 @@ res = exec_net.infer(inputs={input_blob: images})
 
 ### Process the Results
 
-After the inference engine is executed with the input image a result is produced. The result contains a list of classes and a confidence level for the class. The confidence level is an indicator of how certain the model is the input image is that class. The class of an image is often the class with the highest confidence level.
+After the inference engine is executed with the input image, a result is produced. This result contains a list of classes and a confidence level for the class. The confidence level is an indicator of how certain the model is the input image is that class. The class of an image is often the class with the highest confidence level.
 
 ```python
 res = res[out_blob]
@@ -215,7 +220,7 @@ res = res[out_blob]
 
 For this application the classes are sorted highest to lowest based on confidence level. Then the specified (```-nt``` or ```--top_n```) number of classes is output.
 
-Print the result
+Print the result.
 
 ```python
 number_top = args['top_n']
@@ -264,7 +269,7 @@ To run the application on an image ```car1.jpeg``` using the AlexNet (```alexnet
 $  python openvino/ov-classification.py -m alexnet.xml -l imagenet_classes.txt -i car1.jpeg
 ```
 
-Which outputs
+Which outputs:
 
 ```
 [ INFO ] Creating the argument parser...
@@ -300,5 +305,5 @@ Which outputs
 
 ## Summary
 
-We have built the ```Hello World``` of ```classification``` using OpenVINO^TM^.
+We have built the ```Hello World``` of ```classification``` using OpenVINO<sup>TM</sup>.
 
