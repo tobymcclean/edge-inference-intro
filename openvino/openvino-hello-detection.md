@@ -1,22 +1,25 @@
-# Hello Object Detection with OpenVINO^TM^
+# How to detect objects in a picture and classify them using OpenVINO<sup>TM</sup> with Python
 
+Toby McClean 
 
+[✉️ toby.mcclean@adlinktech.com](mailto:toby.mcclean@adlinktech.com)
+[🔗 https://www.linkedin.com/in/tobymcclean/](https://www.linkedin.com/in/tobymcclean/)
 
 ------
 
-The computer vision capability we're highlighting in this tutorial is object detection, using networks that have been trained on large datasets to detect and classify objects.
+The computer vision capability we're highlighting in this tutorial is object detection, using networks that have been trained on large datasets, to detect and classify objects.
 
 The application accepts an input image and outputs an image with bounding boxes around the detected objects. 
 
-As examples we provide a Python version of the application.
+As an example, we provide a Python version of the application.
 
 ## Code Explained
 
-Now, we are going to walk through creating a new application from scratch in Python for object detection called `ov-detection.py`. The application will load an abritary image from disk and classify it using a detection network such as `SSD with MobileNet V2`
+Now, we are going to walk through creating a new application, from scratch, in Python for object detection, called `ov-detection.py`. The application will load an abritary image from disk and classify it using a detection network such as `SSD with MobileNet V2`
 
 ### Setting up the Project
 
-You can store the `ov-detection.py` file that we will be creating wherever you want on your device. For simplicity, this guide will create it along with some test images inside a directory under the user's home directory; `~/edge-inference-intro`.
+You can store the `ov-detection.py` file that we will be creating wherever you want on your device. For simplicity, this guide will create it, along with some test images inside a directory under the user's home directory; `~/edge-inference-intro`.
 
 Run the following commands from a terminal to create the directory and files.
 
@@ -25,9 +28,10 @@ $ cd ~/
 $ mkdir edge-inference-intro
 $ cd edge-inference-intro
 $ touch ov-detection.py
+$ wget https://github.com/tobymcclean/edge-aiot-resources/raw/master/imgs/cars_parked2.jpg
 ```
 
-Some test images are downloaded to the folder with the `wget` commands above.
+Some test images are downloaded to the folder with the `wget` commands above. Please note if the directory `~/edge-inference-intro` already exists then the command `mkdir edge-inference-intro` will fail, this is not an issue, continue as normal.  
 
 ### Download Pretrained Model
 
@@ -107,9 +111,9 @@ For example, to run the application
 python ov-detection.py -m public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.xml -x /opt/intel/openvino/inference_engine/lib/intel64/libcpu_extension.dylib -i car1.jpeg
 ```
 
-### Create the OpenVINO^TM^ Inference Engine
+### Create the OpenVINO<sup>TM</sup> Inference Engine
 
-The following code will load the provided classification model with OpenVINO^TM^. The [OpenVINO^TM^ documentation](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models) provides a list of pre-trained models for performing classifications. 
+The following code will load the provided classification model with OpenVINO<sup>TM</sup>. The [OpenVINO<sup>TM</sup> documentation](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models) provides a list of pre-trained models for performing classifications. 
 
 In this article we will continue to use SSD with MobileNet V2 which can classify the 80 different categories; see [coco_classes.txt](coco_classes.txt) for the list of categories. The classes include:
 
@@ -225,7 +229,7 @@ res = exec_net.infer(inputs={input_blob: images})
 
 ### Process the Results
 
-After the inference engine is executed with the input image a result is produced. The result contains a list of bounding boxes with a classe and a confidence level. The confidence level is an indicator of how certain the model is the contents of the box are of the specified class.
+After the inference engine is executed with the input image a result is produced. The result contains a list of bounding boxes with a class and a confidence level. The confidence level is an indicator of how certain the model is the contents of the box are of the specified class.
 
 ```python
 res = res[out_blob]
@@ -290,7 +294,7 @@ cv2.destroyAllWindows()
 
 ## Running the Application
 
-To run the application on an image ```car1.jpeg``` using the AlexNet (```alexnet.xml```) model:
+To run the application on an image ```cars_parked2.jpeg``` using the AlexNet (```alexnet.xml```) model:
 
 ```bash
 $  python openvino/ov-detection.py -m public/ssd_mobilenet_v2_coco/FP32/ssd_mobilenet_v2_coco.xml -l coco_classes.txt -x /opt/intel/openvino/inference_engine/lib/intel64/libcpu_extension.dylib -i cars_parked2.jpeg
@@ -326,5 +330,5 @@ Which outputs
 
 ## Summary
 
-We have built the ```Hello World``` of ```classification``` using OpenVINO^TM^.
+We have built the ```Hello World``` of ```classification``` using OpenVINO<sup>TM</sup>.
 
