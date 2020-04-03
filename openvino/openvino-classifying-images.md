@@ -1,4 +1,4 @@
-# How to run the Hello Classification with OpenVINO<sup>TM</sup> using Python
+# Hello Classification with OpenVINO<sup>TM</sup>
 
 Toby McClean 
 
